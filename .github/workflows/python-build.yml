@@ -107,6 +107,7 @@ jobs:
       shell: bash
       run: |
         # Lint Python code using pylint
+        ls
         pylint ./program.py
 
     - id: pylint-score
