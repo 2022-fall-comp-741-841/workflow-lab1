@@ -27,7 +27,7 @@ jobs:
       run: |
         # Install dependencies (globally on the GitHub Actions runner)
         python -m pip install --upgrade pip
-        python -m pip install flake8 pep8-naming flake8-variables-names flake8-docstrings pytest
+        python -m pip install flake8 pep8-naming flake8-variables-names flake8-docstrings pytest pycodestyle pylint
         flake8 --version
         pytest -V
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
@@ -39,11 +39,11 @@ jobs:
         # Show git commit log
         git log --name-status
     - id: check-init-log
-      name: Check for design document
+      name: Check for INIT-LOG.md
       shell: bash
       continue-on-error: true
       run: |
-        # Check for design document
+        # Check for INIT-LOG.md
         [ -f "INIT-LOG.md" ] && [ -s "INIT-LOG.md" ] \
         && echo "INIT-LOG.md is present." \
         || exit 1
@@ -77,6 +77,7 @@ jobs:
       run: |
         # Lint Python code
         flake8 . --extend-ignore=D,VNE,N --show-source --count --max-complexity=10 --max-line-length=79
+
     - id: lint-pep-8
       name: Check for PEP-8 naming conventions
       continue-on-error: true
@@ -84,6 +85,7 @@ jobs:
       run: |
         # Check PEP-8 naming
         flake8 . --extend-ignore=D,F,E,W --show-source --count --max-complexity=10 --max-line-length=79
+
     - id: lint-docstrings
       name: Check for PEP-257 docstring conventions
       continue-on-error: true
@@ -91,6 +93,7 @@ jobs:
       run: |
         # Check docstrings
         flake8 . --extend-ignore=D212,VNE,N,F,E,W --show-source --count --max-complexity=10 --max-line-length=7
+
     - id: lint-pylint
       name: Lint Python code with pylint
       continue-on-error: true
@@ -114,6 +117,7 @@ jobs:
       run: |
           # Lint Python code using pycodestyle
           find . -type f -name "*.py" | xargs pycodestyle --count --statistics
+
     - id: summary-report
       name: Summary of checks
       shell: bash
@@ -121,7 +125,7 @@ jobs:
         # Summary of checks
         echo "SUMMARY:"
         echo "Pylint Results:"
-        echo "${{ steps.pylint-score.outputs.score }}\n"
+        echo "${{ steps.pylint-score.outputs.score }}"
         echo ""
         echo "${{ steps.lint-pycodestyle.outcome }} -> Pycodestyle has no errors."
         echo "${{ steps.check-init-log.outcome }} -> INIT-LOG.md document present"
