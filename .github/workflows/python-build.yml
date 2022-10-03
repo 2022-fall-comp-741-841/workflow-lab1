@@ -47,6 +47,13 @@ jobs:
         [ -f "INIT-LOG.md" ] && [ -s "INIT-LOG.md" ] \
         && echo "INIT-LOG.md is present." \
         || exit 1
+    - id: print-working-dir
+      name: Print working directory
+      shell: bash
+      run: |
+        # Print working directory
+        pwd
+
     - id: compile
       name: Compile all files
       shell: bash
