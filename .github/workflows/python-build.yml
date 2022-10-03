@@ -107,7 +107,7 @@ jobs:
       shell: bash
       run: |
         # Lint Python code using pylint
-        pylint *.py
+        pylint program.py
 
     - id: pylint-score
       name: Pylint score
@@ -115,7 +115,7 @@ jobs:
       shell: bash
       run: |
         #stores pylint score in an output variable
-        echo "::set-output name=score::$(pylint *.py | sed -n 's/^Your code has been rated at //p')"
+        echo "::set-output name=score::$(pylint program.py | sed -n 's/^Your code has been rated at //p')"
 
     - id: lint-pycodestyle
       name: Lint Python code with pycodestyle
