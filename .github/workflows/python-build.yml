@@ -2,11 +2,11 @@ name: Python Build for COMP-841
 
 on:
   workflow_call:
-    push:
+  push:
 
 jobs:
   python-build-comp-841:
-    name: Python Build for COMP-880
+    name: Python Build for COMP-841
     runs-on: ubuntu-latest
 
     steps:
