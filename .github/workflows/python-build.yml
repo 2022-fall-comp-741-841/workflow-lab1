@@ -1,0 +1,144 @@
+name: Python Build for COMP-841
+
+on:
+  workflow_call:
+
+jobs:
+  python-build-comp-841:
+    name: Python Build for COMP-880
+    runs-on: ubuntu-latest
+
+    steps:
+    - id: checkout-repo
+      name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        # Get complete history so we can see the log
+        fetch-depth: 0
+    - id: setup-python
+      name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+        cache: 'pip'
+    - id: install-dependencies
+      name: Install dependencies
+      shell: bash
+      run: |
+        # Install dependencies (globally on the GitHub Actions runner)
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pep8-naming flake8-variables-names flake8-docstrings pytest
+        flake8 --version
+        pytest -V
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - id: show-git-log
+      name: Show git commit log
+      shell: bash
+      continue-on-error: true
+      run: |
+        # Show git commit log
+        git log --name-status
+    - id: check-init-log
+      name: Check for design document
+      shell: bash
+      continue-on-error: true
+      run: |
+        # Check for design document
+        [ -f "INIT-LOG.md" ] && [ -s "INIT-LOG.md" ] \
+        && echo "INIT-LOG.md is present." \
+        || exit 1
+    - id: compile
+      name: Compile all files
+      shell: bash
+      run: |
+        # Compile all files
+        python -m compileall . -l
+    - id: test
+      name: Run unit tests
+      shell: bash
+      continue-on-error: true
+      run: |
+        # Run unit tests
+        if [[ -d "tests" ]];
+          then python -m unittest discover tests;
+          else echo "No tests run.";
+        fi
+    - id: run
+      name: Run all Python code to see output
+      shell: bash
+      continue-on-error: true
+      run: |
+        # Run all Python code to see output
+        for f in *.py; do python "$f"; done
+    - id: lint-code
+      name: Lint Python code
+      continue-on-error: true
+      shell: bash
+      run: |
+        # Lint Python code
+        flake8 . --extend-ignore=D,VNE,N --show-source --count --max-complexity=10 --max-line-length=79
+    - id: lint-pep-8
+      name: Check for PEP-8 naming conventions
+      continue-on-error: true
+      shell: bash
+      run: |
+        # Check PEP-8 naming
+        flake8 . --extend-ignore=D,F,E,W --show-source --count --max-complexity=10 --max-line-length=79
+    - id: lint-docstrings
+      name: Check for PEP-257 docstring conventions
+      continue-on-error: true
+      shell: bash
+      run: |
+        # Check docstrings
+        flake8 . --extend-ignore=D212,VNE,N,F,E,W --show-source --count --max-complexity=10 --max-line-length=7
+    - id: lint-pylint
+      name: Lint Python code with pylint
+      continue-on-error: true
+      shell: bash
+      run: |
+        # Lint Python code using pylint
+        pylint $(git ls-files '*.py')
+
+    - id: pylint-score
+      name: Pylint score
+      continue-on-error: true
+      shell: bash
+      run: |
+        #stores pylint score in an output variable
+        echo "::set-output name=score::$(pylint $(git ls-files '*.py') | sed -n 's/^Your code has been rated at //p')"
+
+    - id: lint-pycodestyle
+      name: Lint Python code with pycodestyle
+      continue-on-error: true
+      shell: bash
+      run: |
+          # Lint Python code using pycodestyle
+          find . -type f -name "*.py" | xargs pycodestyle --count --statistics
+    - id: summary-report
+      name: Summary of checks
+      shell: bash
+      run: |
+        # Summary of checks
+        echo "SUMMARY:"
+        echo "Pylint Results:"
+        echo "${{ steps.pylint-score.outputs.score }}\n"
+        echo ""
+        echo "${{ steps.lint-pycodestyle.outcome }} -> Pycodestyle has no errors."
+        echo "${{ steps.check-init-log.outcome }} -> INIT-LOG.md document present"
+        [ -d "tests" ] && echo "${{ steps.test.outcome }} -> Unit tests working"
+        echo "${{ steps.lint-code.outcome }} -> Python code formatted well"
+        echo "${{ steps.lint-pep-8.outcome }} -> PEP-8 naming conventions followed"
+        echo "${{ steps.lint-docstrings.outcome }} -> PEP-257 docstring conventions followed"
+        #
+        if [[ true \
+            && ${{ steps.check-init-log.outcome }} == "success" \
+            && ${{ steps.test.outcome }} == "success" \
+            && ${{ steps.lint-code.outcome }} == "success" \
+            && ${{ steps.lint-pylint.outcome }} == "success" \
+            && ${{ steps.lint-pycodestyle.outcome }} == "success" \
+            && ${{ steps.lint-pep-8.outcome }} == "success" \
+            && ${{ steps.lint-docstrings.outcome }} == "success" \
+           ]];
+          then exit 0;
+          else exit 1;
+        fi
