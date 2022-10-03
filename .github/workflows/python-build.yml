@@ -2,7 +2,6 @@ name: Python Build for COMP-841
 
 on:
   workflow_call:
-  push:
 
 jobs:
   python-build-comp-841:
